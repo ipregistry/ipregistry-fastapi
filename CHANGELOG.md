@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `Ipregistry` request-aware service built on the asynchronous Ipregistry Python client, with
   per-request memoization, fail-open semantics and in-memory response caching.
-- Annotated dependencies: `IpInfoDep`, `IpregistryDep`, `ClientIpDep`.
+- Annotated dependencies: `IpInfoDep`, `IpregistryDep`, `ClientIpDep` — fully asynchronous and
+  usable in both HTTP and WebSocket endpoints.
 - `ipregistry_lifespan` and `add_ipregistry` for application wiring and client lifecycle.
 - Blocking guards usable as route dependencies or middleware actions: `block_countries`
   (HTTP 451, block/allow modes, unknown-country policy) and `block_threats` (HTTP 403, opt-in

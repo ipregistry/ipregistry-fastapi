@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Mapping, Union
 
-from fastapi import Request
+from fastapi.requests import HTTPConnection
 from ipregistry import ApiError, IpInfo, IpregistryError, IpregistryLookupError, RequesterIpInfo, UserAgent
 
 from .ip import IpSource, is_valid_ip
@@ -137,7 +137,7 @@ class IpregistryFake(Ipregistry):
             return UserAgent(**data)
         return UserAgent(header=user_agent)
 
-    def client_ip(self, request: Request) -> str | None:
+    def client_ip(self, request: HTTPConnection) -> str | None:
         ip = self._ip_extractor(request)
         if ip:
             return ip

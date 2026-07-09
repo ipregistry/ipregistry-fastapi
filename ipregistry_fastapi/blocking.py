@@ -19,12 +19,12 @@ from __future__ import annotations
 import re
 from typing import Iterable, Literal, Union
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import HTTPException
+from fastapi.requests import HTTPConnection
 from ipregistry import IpInfo
 
-from .dependencies import SERVICE_UNAVAILABLE_DETAIL, get_ipregistry
+from .dependencies import SERVICE_UNAVAILABLE_DETAIL, IpregistryDep
 from .guards import is_threat
-from .service import Ipregistry
 
 _COUNTRY_CODE_PATTERN = re.compile(r"^[A-Za-z]{2}$")
 
@@ -33,9 +33,9 @@ class Blocker:
     """Base for blocking rules, usable both as a FastAPI dependency and as a
     middleware action."""
 
-    async def __call__(self, request: Request, service: Ipregistry = Depends(get_ipregistry)) -> None:
-        info = await service.for_request(request)
-        if info is None and not service.settings.fail_open and service.request_error(request) is not None:
+    async def __call__(self, connection: HTTPConnection, service: IpregistryDep) -> None:
+        info = await service.for_request(connection)
+        if info is None and not service.settings.fail_open and service.request_error(connection) is not None:
             raise HTTPException(status_code=503, detail=SERVICE_UNAVAILABLE_DETAIL)
         self.check(info)
 

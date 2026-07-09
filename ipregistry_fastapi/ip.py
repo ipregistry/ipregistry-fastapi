@@ -19,10 +19,10 @@ from __future__ import annotations
 import ipaddress
 from typing import Callable, Optional, Union
 
-from fastapi import Request
+from fastapi.requests import HTTPConnection
 
-IpExtractor = Callable[[Request], Optional[str]]
-"""A callable that extracts the client IP address from a request, or None."""
+IpExtractor = Callable[[HTTPConnection], Optional[str]]
+"""A callable that extracts the client IP address from an HTTP or WebSocket connection, or None."""
 
 IpSource = Union[str, IpExtractor]
 """An IP source: 'client', a trusted-proxy preset name, 'header:<name>' or a callable."""
@@ -102,7 +102,7 @@ def build_ip_extractor(source: IpSource = "client") -> IpExtractor:
 
     Accepts 'client' (the ASGI client address), a trusted-proxy preset name
     ('auto', 'cloudflare', 'nginx', 'forwarded-for'), 'header:<name>' for a
-    custom header, or a callable taking a request and returning an IP or None.
+    custom header, or a callable taking a connection and returning an IP or None.
 
     Only configure headers set by a proxy you control: client-supplied headers
     are trivially spoofable.
@@ -128,13 +128,13 @@ def build_ip_extractor(source: IpSource = "client") -> IpExtractor:
             "'header:<name>' or a callable"
         )
 
-    def extract(request: Request) -> str | None:
+    def extract(request: HTTPConnection) -> str | None:
         return _extract_from_headers(request, headers)
 
     return extract
 
 
-def _extract_from_client(request: Request) -> str | None:
+def _extract_from_client(request: HTTPConnection) -> str | None:
     client = request.client
     if client is None or not client.host:
         return None
@@ -142,7 +142,7 @@ def _extract_from_client(request: Request) -> str | None:
     return ip if ip is not None and is_valid_ip(ip) else None
 
 
-def _extract_from_headers(request: Request, headers: tuple[str, ...]) -> str | None:
+def _extract_from_headers(request: HTTPConnection, headers: tuple[str, ...]) -> str | None:
     for name in headers:
         raw = request.headers.get(name)
         if not raw:

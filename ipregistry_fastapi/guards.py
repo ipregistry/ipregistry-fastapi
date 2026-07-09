@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Union
 
-from fastapi import Request
+from fastapi.requests import HTTPConnection
 from ipregistry import IpInfo, UserAgents
 
 
@@ -72,7 +72,7 @@ def is_threat(
     return any(bool(signal) for signal in signals)
 
 
-def is_bot(subject: Union[Request, str, None]) -> bool:
+def is_bot(subject: Union[HTTPConnection, str, None]) -> bool:
     """Return True when the request or User-Agent string looks like a bot or
     crawler. Heuristic string check; no API call and no credit consumed."""
     if subject is None:

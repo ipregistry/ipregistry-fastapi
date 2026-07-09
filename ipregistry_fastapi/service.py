@@ -19,7 +19,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Iterable, Union
 
-from fastapi import Request
+from fastapi.requests import HTTPConnection
 from ipregistry import (
     AsyncIpregistryClient,
     InMemoryCache,
@@ -149,7 +149,7 @@ class Ipregistry:
         response = await self._client.parse_user_agent(user_agent, **params)
         return response.data
 
-    def client_ip(self, request: Request) -> str | None:
+    def client_ip(self, request: HTTPConnection) -> str | None:
         """Resolve the client IP for a request using the configured IP source.
 
         Returns the configured development_ip when the extracted address is
@@ -163,7 +163,7 @@ class Ipregistry:
 
     async def for_request(
         self,
-        request: Request,
+        request: HTTPConnection,
         *,
         fields: str | None = None,
         hostname: bool | None = None,
@@ -187,7 +187,7 @@ class Ipregistry:
         return info
 
     @staticmethod
-    def request_error(request: Request) -> IpregistryError | None:
+    def request_error(request: HTTPConnection) -> IpregistryError | None:
         """The error recorded by for_request for this request, if any."""
         return getattr(request.state, ERROR_STATE_KEY, None)
 

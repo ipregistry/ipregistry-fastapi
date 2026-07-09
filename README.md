@@ -24,7 +24,8 @@ async def index(info: IpInfoDep):
 - **Async-first**: non-blocking lookups through the official asynchronous Ipregistry client, with
   connection reuse managed by the application lifespan.
 - **Idiomatic dependencies**: `IpInfoDep`, `IpregistryDep` and `ClientIpDep` annotated types plug
-  straight into path operations; one cached lookup per request, shared by every consumer.
+  straight into path operations — HTTP and WebSocket alike; one cached lookup per request, shared
+  by every consumer. All dependencies are coroutines: no threadpool dispatch on the request path.
 - **Guards**: block countries (HTTP 451) and threats (HTTP 403) per route, per router, or app-wide.
 - **Middleware**: optional pure-ASGI middleware for global enrichment and blocking, with static
   asset and bot skipping to save credits.
@@ -264,6 +265,15 @@ Stubs are API-shaped dicts, `IpInfo` instances, or exceptions to raise. Unlike t
 the fake accepts private addresses so requests made through `TestClient` resolve out of the box.
 Assertions: `assert_looked_up`, `assert_not_looked_up`, `assert_looked_up_times`,
 `assert_nothing_looked_up`, `assert_origin_looked_up`, `assert_user_agents_parsed`.
+
+FastAPI's standard [`dependency_overrides`](https://fastapi.tiangolo.com/advanced/testing-dependencies/)
+mechanism works too, and propagates to `IpInfoDep` and the blocking guards:
+
+```python
+from ipregistry_fastapi import get_ipregistry
+
+app.dependency_overrides[get_ipregistry] = lambda: fake
+```
 
 ## Errors
 

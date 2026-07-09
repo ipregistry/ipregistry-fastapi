@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.testclient import TestClient
 from ipregistry import ApiError
 
@@ -8,6 +8,7 @@ from ipregistry_fastapi import (
     IpregistryDep,
     IpregistrySettings,
     add_ipregistry,
+    get_ipregistry,
     ipregistry_lifespan,
 )
 from ipregistry_fastapi.testing import IpregistryFake
@@ -32,6 +33,13 @@ def build_app(fake: IpregistryFake) -> FastAPI:
     @app.get("/service")
     async def service(ipregistry: IpregistryDep):
         return {"configured": ipregistry is not None}
+
+    @app.websocket("/ws")
+    async def websocket_endpoint(websocket: WebSocket, info: IpInfoDep):
+        await websocket.accept()
+        country = info.location.country.code if info and info.location and info.location.country else None
+        await websocket.send_json({"country": country})
+        await websocket.close()
 
     return app
 
@@ -99,6 +107,33 @@ class TestIpregistryDep:
         with TestClient(build_app(fake)) as client:
             response = client.get("/service")
         assert response.json() == {"configured": True}
+
+
+class TestWebSockets:
+    def test_ip_info_dep_in_websocket_endpoint(self):
+        fake = IpregistryFake({"*": FR_RESPONSE})
+        with TestClient(build_app(fake)) as client:
+            with client.websocket_connect("/ws") as websocket:
+                assert websocket.receive_json() == {"country": "FR"}
+        assert len(fake.lookups) == 1
+
+    def test_websocket_with_proxy_header(self):
+        fake = IpregistryFake({"66.165.2.7": {"location": {"country": {"code": "US"}}}}, ip_extractor="auto")
+        with TestClient(build_app(fake)) as client:
+            with client.websocket_connect("/ws", headers={"x-real-ip": "66.165.2.7"}) as websocket:
+                assert websocket.receive_json() == {"country": "US"}
+        fake.assert_looked_up("66.165.2.7")
+
+
+class TestDependencyOverrides:
+    def test_get_ipregistry_can_be_overridden(self):
+        app = build_app(IpregistryFake())  # attached service returns no data
+        override = IpregistryFake({"*": FR_RESPONSE})
+        app.dependency_overrides[get_ipregistry] = lambda: override
+        with TestClient(app) as client:
+            response = client.get("/country")
+        assert response.json() == {"country": "FR"}
+        assert len(override.lookups) == 1
 
 
 class TestAddIpregistry:
