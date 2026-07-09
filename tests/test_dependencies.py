@@ -1,3 +1,4 @@
+import pytest
 from fastapi import FastAPI, WebSocket
 from fastapi.testclient import TestClient
 from ipregistry import ApiError
@@ -123,6 +124,21 @@ class TestWebSockets:
             with client.websocket_connect("/ws", headers={"x-real-ip": "66.165.2.7"}) as websocket:
                 assert websocket.receive_json() == {"country": "US"}
         fake.assert_looked_up("66.165.2.7")
+
+
+class TestWebSocketDenial:
+    def test_fail_closed_denies_handshake_with_503(self):
+        from starlette.testclient import WebSocketDenialResponse
+
+        fake = IpregistryFake(
+            {"*": ApiError("INTERNAL", "boom", "")},
+            settings=IpregistrySettings(api_key="fake", fail_open=False),
+        )
+        with TestClient(build_app(fake)) as client:
+            with pytest.raises(WebSocketDenialResponse) as denial:
+                with client.websocket_connect("/ws"):
+                    pass
+        assert denial.value.status_code == 503
 
 
 class TestDependencyOverrides:

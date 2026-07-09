@@ -86,6 +86,14 @@ class IpregistrySettings(BaseSettings):
     your server's proxy-headers configuration), a trusted-proxy preset ('auto',
     'cloudflare', 'nginx', 'forwarded-for'), or 'header:<name>' for a custom header."""
 
+    @field_validator("ip_source")
+    @classmethod
+    def _validate_ip_source(cls, value: str) -> str:
+        from .ip import build_ip_extractor
+
+        build_ip_extractor(value)  # raises ValueError on unknown sources
+        return value
+
     @field_validator("development_ip")
     @classmethod
     def _validate_development_ip(cls, value: str | None) -> str | None:

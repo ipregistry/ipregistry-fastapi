@@ -32,7 +32,7 @@ from ipregistry import (
     UserAgent,
 )
 
-from .errors import MissingApiKeyError
+from .exceptions import MissingApiKeyError
 from .ip import IpExtractor, IpSource, anonymize_ip, build_ip_extractor, is_public_ip
 from .settings import IpregistrySettings
 from .version import __version__
@@ -149,21 +149,21 @@ class Ipregistry:
         response = await self._client.parse_user_agent(user_agent, **params)
         return response.data
 
-    def client_ip(self, request: HTTPConnection) -> str | None:
+    def client_ip(self, connection: HTTPConnection) -> str | None:
         """Resolve the client IP for a request using the configured IP source.
 
         Returns the configured development_ip when the extracted address is
         missing or not publicly routable, and None when no usable address
         remains (private and reserved addresses are never sent to the API).
         """
-        ip = self._ip_extractor(request)
+        ip = self._ip_extractor(connection)
         if ip is not None and is_public_ip(ip):
             return ip
         return self._settings.development_ip
 
     async def for_request(
         self,
-        request: HTTPConnection,
+        connection: HTTPConnection,
         *,
         fields: str | None = None,
         hostname: bool | None = None,
@@ -171,12 +171,12 @@ class Ipregistry:
         """Look up IP intelligence for the request's client, memoized on
         request.state.ipregistry. Never raises: on failure the request proceeds
         without data and the error is stored on request.state.ipregistry_error."""
-        state = request.state
+        state = connection.state
         if hasattr(state, STATE_KEY):
             return getattr(state, STATE_KEY)
 
         info: IpInfo | None = None
-        ip = self.client_ip(request)
+        ip = self.client_ip(connection)
         if ip is not None:
             try:
                 info = await self.lookup(ip, fields=fields, hostname=hostname)
@@ -187,9 +187,9 @@ class Ipregistry:
         return info
 
     @staticmethod
-    def request_error(request: HTTPConnection) -> IpregistryError | None:
+    def request_error(connection: HTTPConnection) -> IpregistryError | None:
         """The error recorded by for_request for this request, if any."""
-        return getattr(request.state, ERROR_STATE_KEY, None)
+        return getattr(connection.state, ERROR_STATE_KEY, None)
 
     def _options(self, fields: str | None, hostname: bool | None, params: dict[str, Any]) -> dict[str, Any]:
         options = dict(params)

@@ -137,12 +137,12 @@ class IpregistryFake(Ipregistry):
             return UserAgent(**data)
         return UserAgent(header=user_agent)
 
-    def client_ip(self, request: HTTPConnection) -> str | None:
-        ip = self._ip_extractor(request)
+    def client_ip(self, connection: HTTPConnection) -> str | None:
+        ip = self._ip_extractor(connection)
         if ip:
             return ip
-        if request.client is not None and request.client.host:
-            return request.client.host
+        if connection.client is not None and connection.client.host:
+            return connection.client.host
         return self.settings.development_ip
 
     # Assertions

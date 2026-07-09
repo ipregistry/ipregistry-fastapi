@@ -128,23 +128,23 @@ def build_ip_extractor(source: IpSource = "client") -> IpExtractor:
             "'header:<name>' or a callable"
         )
 
-    def extract(request: HTTPConnection) -> str | None:
-        return _extract_from_headers(request, headers)
+    def extract(connection: HTTPConnection) -> str | None:
+        return _extract_from_headers(connection, headers)
 
     return extract
 
 
-def _extract_from_client(request: HTTPConnection) -> str | None:
-    client = request.client
+def _extract_from_client(connection: HTTPConnection) -> str | None:
+    client = connection.client
     if client is None or not client.host:
         return None
     ip = sanitize_ip(client.host)
     return ip if ip is not None and is_valid_ip(ip) else None
 
 
-def _extract_from_headers(request: HTTPConnection, headers: tuple[str, ...]) -> str | None:
+def _extract_from_headers(connection: HTTPConnection, headers: tuple[str, ...]) -> str | None:
     for name in headers:
-        raw = request.headers.get(name)
+        raw = connection.headers.get(name)
         if not raw:
             continue
         ip = sanitize_ip(raw.split(",", 1)[0])

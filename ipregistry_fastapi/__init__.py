@@ -54,7 +54,7 @@ from .dependencies import (
     get_ip_info as get_ip_info,
     get_ipregistry as get_ipregistry,
 )
-from .errors import MissingApiKeyError as MissingApiKeyError
+from .exceptions import MissingApiKeyError as MissingApiKeyError
 from .guards import is_bot as is_bot, is_eu as is_eu, is_threat as is_threat
 from .ip import (
     IpExtractor as IpExtractor,

@@ -76,3 +76,11 @@ class TestValidation:
     def test_zero_timeout(self):
         with pytest.raises(ValidationError):
             IpregistrySettings(timeout=0)
+
+    def test_invalid_ip_source(self):
+        with pytest.raises(ValidationError):
+            IpregistrySettings(ip_source="cloudfare")  # typo caught at settings load
+
+    def test_valid_ip_sources(self):
+        for source in ("client", "auto", "cloudflare", "nginx", "forwarded-for", "header:x-client-ip"):
+            assert IpregistrySettings(ip_source=source).ip_source == source
