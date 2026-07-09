@@ -1,0 +1,95 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Validate version input
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid version: $VERSION (expected X.Y.Z)"
+            exit 1
+          fi
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists"
+            exit 1
+          fi
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.3.2
+        with:
+          python-version: '3.14'
+
+      - name: Check version matches pyproject.toml
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          PYPROJECT_VERSION="$(uv version --short)"
+          if [ "$PYPROJECT_VERSION" != "$VERSION" ]; then
+            echo "Version mismatch: pyproject.toml has $PYPROJECT_VERSION, input is $VERSION"
+            exit 1
+          fi
+
+      - name: Check version matches version.py
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          MODULE_VERSION="$(uv run python -c 'from ipregistry_fastapi import __version__; print(__version__)')"
+          if [ "$MODULE_VERSION" != "$VERSION" ]; then
+            echo "Version mismatch: ipregistry_fastapi.__version__ is $MODULE_VERSION, input is $VERSION"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run lint
+        run: uv run ruff check .
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Build distributions
+        run: uv build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+      - name: Extract release notes from changelog
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          awk -v version="$VERSION" '
+            $0 ~ "^## \\[" version "\\]" { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! [ -s release-notes.md ]; then
+            echo "No changelog section found for $VERSION" > release-notes.md
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          gh release create "$VERSION" \
+            --title "$VERSION" \
+            --notes-file release-notes.md \
+            dist/*

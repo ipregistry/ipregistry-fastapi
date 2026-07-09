@@ -1,0 +1,74 @@
+[project]
+name = 'ipregistry-fastapi'
+version = '1.0.0'
+description = 'Official Ipregistry integration for FastAPI: dependency-driven IP geolocation and threat detection for every request'
+authors = [
+    {name = 'Ipregistry Team', email = 'support@ipregistry.co'},
+    {name = 'Laurent Pellegrino', email = 'laurent.pellegrino@ipregistry.co'}
+]
+license = 'Apache-2.0'
+license-files = ['LICENSE.txt']
+readme = 'README.md'
+requires-python = '>=3.10'
+classifiers = [
+    'Framework :: FastAPI',
+    'Intended Audience :: Developers',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
+    'Topic :: Internet',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+    'Typing :: Typed'
+]
+keywords = [
+    'fastapi',
+    'starlette',
+    'ipinfo',
+    'ipregistry',
+    'ip-address',
+    'ip-data',
+    'ip-geolocation',
+    'geoblocking',
+    'threat-detection',
+    'user-agent-parsing'
+]
+dependencies = [
+    'fastapi (>=0.115.0)',
+    'ipregistry[async] (>=5.0.0,<6.0.0)',
+    'pydantic (>=2.13.4,<3.0.0)',
+    'pydantic-settings (>=2.6.0,<3.0.0)'
+]
+
+[project.urls]
+Homepage = 'https://ipregistry.co'
+Repository = 'https://github.com/ipregistry/ipregistry-fastapi'
+
+[dependency-groups]
+dev = [
+    'httpx>=0.28.1,<0.29.0',
+    'pytest>=9.1.1',
+    'pytest-asyncio>=1.0.0',
+    'ruff>=0.15.20,<0.16.0'
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+testpaths = ['tests']
+
+[tool.uv.build-backend]
+module-root = ""
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
