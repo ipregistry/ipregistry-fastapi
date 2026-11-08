@@ -20,6 +20,7 @@ classifiers = [
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
     'Programming Language :: Python :: 3.14',
+    'Programming Language :: Python :: 3.15',
     'Topic :: Internet',
     'Topic :: Software Development :: Libraries :: Python Modules',
     'Typing :: Typed'
@@ -50,9 +51,9 @@ Repository = 'https://github.com/ipregistry/ipregistry-fastapi'
 [dependency-groups]
 dev = [
     'httpx>=0.28.1,<0.29.0',
-    'pytest>=9.1.1',
+    'pytest>=9.2.0',
     'pytest-asyncio>=1.0.0',
-    'ruff>=0.15.20,<0.16.0'
+    'ruff>=0.17.4,<0.18.0'
 ]
 
 [tool.ruff]
@@ -70,5 +71,5 @@ testpaths = ['tests']
 module-root = ""
 
 [build-system]
-requires = ["uv_build>=0.11.0,<0.12.0"]
+requires = ["uv_build>=0.13.7,<0.14.0"]
 build-backend = "uv_build"
